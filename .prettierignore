@@ -1,0 +1,8 @@
+build
+coverage
+functions/node_modules
+.idea
+node_modules
+*.json
+*.iml
+*.log
