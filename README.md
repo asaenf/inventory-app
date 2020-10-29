@@ -1,3 +1,17 @@
+## Firebase cloud functions 
+
+### emulators 
+
+`functions/ firebase emulators:start`
+
+### deploy
+ 
+`firebase deploy --only functions` 
+
+## Code format
+
+`npx prettier --write .`
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

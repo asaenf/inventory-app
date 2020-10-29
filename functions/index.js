@@ -1,152 +1,246 @@
 // The Cloud Functions for Firebase SDK to create Cloud Functions and setup triggers.
-const functions = require('firebase-functions');
+const functions = require("firebase-functions");
 
 // The Firebase Admin SDK to access Cloud Firestore.
-const firebase = require('firebase-admin');
-firebase.initializeApp();
+const firebase = require("firebase-admin");
+firebase.initializeApp({
+  apiKey: "AIzaSyCuWFr0BZjE-wTQz__fElsgwk4BQPBk-60",
+  authDomain: "### FIREBASE AUTH DOMAIN ###",
+  projectId: "inventoryapp-276220",
+  databaseURL: "https://inventoryapp.firebaseio.com",
+});
 
 var db = firebase.firestore();
 
-exports.getItem = functions.https.onRequest(async (req, res) => {
+var itemCollection = db.collection("items");
 
-    console.log("res: ", res);
-    validateRequestMethodAndContentType("GET", req, res)
-
-    const item = req.body.item;
-    if(!item){
-       return res.json({"error":"No item supplied"}).status(400).end();
-    }
-
-    var docRef = await db.collection('items').doc(item);
-    docRef.get().then(function(doc) {
-        if (doc.exists) {
-            console.log("Document data:", doc.data());
-            return res.status(200).json({id: doc.id, ...doc.data()}).end();
-        } else {
-            // doc.data() will be undefined in this case
-            console.log("No such document!");
-            return res.status(404).json({"error":"No such document!"}).end();
-        }
-    }).catch(function(error) {
-          console.log("Error getting document:", error);
-          return res.status(500).json({"error":"Error getting document: "+ error}).end();
-     });
-});
-
-exports.getAllItems = functions.https.onRequest(async (req, res) => {
-
-    validateRequestMethodAndContentType("GET", req, res);
-    const itemList = [];
-    const items = await db.collection('items').get().then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-            itemList.push({ id: doc.id, ...doc.data() });
-        });
-        console.log("Found ", itemList.length, " items");
-        return res.status(200).json(itemList).end();
-    }).catch(function(error) {
-           console.log("Error getting documents:", error);
-           return res.status(500).json({"error":"Error getting documents: "+ error}).end();
-           });
-});
-
-exports.addItem = functions.https.onRequest(async (req, res) =>{
-
-    validateRequestMethodAndContentType("PUT", req, res);
-    item = req.body.item;
-    location = req.body.location;
-    quantity = req.body.quantity;
-    validateRequestBody(item, quantity, location);
-
-    var docRef = await db.collection('items').doc(item);
-    docRef.get().then(function(doc) {
-        if (doc.exists) {
-            console.log("Document data:", doc.data());
-            return res.status(200).json({id: doc.id, ...doc.data()}).end();
-        }
-         throw new Error("Illegal state");
-        }).catch(function(error){
-          console.log("Unable to check if item exists: ", error);
-          return res.status(500).json({"error":"Unable to check if item exists: "+ error}).end();
-        });
-    db.collection("items").doc(item).set({
-        location: location,
-        quantity: quantity
-    }).then(function() {
-        console.log("Document successfully written!");
-        return res.status(200).json(req.body).end();
-    }).catch(function(error){
-        console.log("Error adding item:", error);
-        return res.status(500).json({"error":"Error adding item: "+ error}).end();
+exports.getItem = functions.https.onCall((data, context) => {
+  const item = data.item;
+  const location = data.location;
+  if (!item || !location) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "No item/location supplied"
+    );
+  }
+  console.log("item: ", item, " location ", location);
+  const itemList = [];
+  return itemCollection
+    .where("item", "==", item)
+    .where("location", "==", location)
+    .get()
+    .then(function (querySnapshot) {
+      querySnapshot.forEach(function (doc) {
+        // doc.data() is never undefined for query doc snapshots
+        itemList.push({ id: doc.id, ...doc.data() });
       });
-});
-
-exports.updateItem = functions.https.onRequest(async (req, res) =>{
-
-        validateRequestMethodAndContentType("POST", req, res);
-
-        item = req.body.item;
-        location = req.body.location;
-        quantity = req.body.quantity;
-        validateRequestBody(item, quantity, location);
-
-        db.collection("items").doc(item).set({
-            location: location,
-            quantity: quantity
-        }, { merge: true })
-        .then(function() {
-            console.log("Document successfully written!");
-            return res.status(200).json(req.body).end();
-        }).catch(function(error){
-         console.log("Error updating item:", error);
-         return res.status(500).json({"error":"Error updating item: "+ error}).end();
+      console.log("Found ", itemList.length, " items");
+      return {
+        items: itemList,
+      };
+    })
+    .catch(function (error) {
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error getting document: " + error
+      );
     });
-
 });
 
-exports.deleteItem = functions.https.onRequest(async (req, res) =>{
-        validateRequestMethodAndContentType("DELETE", req, res);
-        item = req.body.item;
-        validateRequestBody(item, 1, "any");
-
-        db.collection("items").doc(item).delete().then(function() {
-            console.log("Document successfully deleted!");
-            return res.status(200).end();
-        }).catch(function(error){
-           console.log("Error deleting item:", error);
-          return res.status(500).json({"error":"Error deleting item: "+ error}).end();
-         });
-
+exports.getItemById = functions.https.onCall((data, context) => {
+  const id = data.id;
+  if (!id) {
+    throw new functions.https.HttpsError("invalid-argument", "No id");
+  }
+  var docRef = itemCollection.doc(id);
+  var foundDoc = null;
+  return docRef
+    .get()
+    .then(function (doc) {
+      if (doc.exists) {
+        console.log("Document data:", doc.data());
+        return { id: doc.id, data: doc.data() };
+      } else {
+        console.log("No such document!");
+        return {};
+      }
+    })
+    .catch(function (error) {
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error getting document: " + error
+      ).end;
+    });
 });
 
-function validateRequestMethodAndContentType(expected, req, res){
-    if(req.method!==expected){
-        let error = "Unexpected request method. Expected: "+expected;
-        console.log("Error: ", error);
-        return res.status(400).json({"error": error}).end();
-    }
-    if(!req.get('content-type') || req.get('content-type')!=="application/json"){
-        let error = "Unexpected request content type. Expected: application/json";
-        console.log("Error: ", error);
-        return res.status(400).json({"error":error}).end();
-    }
-    return;
-}
+exports.getAllItems = functions.https.onCall((data, context) => {
+  return db
+    .collection("items")
+    .get()
+    .then((querySnapshot) => {
+      const itemList = [];
+      querySnapshot.forEach((doc) => {
+        itemList.push({ id: doc.id, ...doc.data() });
+      });
+      console.log("Found ", itemList.length, " items");
+      return { items: itemList };
+    })
+    .catch(function (error) {
+      console.log("Error getting documents:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error getting documents: " + error
+      );
+    });
+});
 
-function validateRequestBody(item, quantity, location){
-    if(!location){
-        let error = "Expected property location";
-        console.log("Error: ", error);
-        return res.status(400).json({"error":error}).end();
-    }
-    if(!item){
-        let error = "Expected property item";
-        console.log("Error: ", error);
-        return res.status(400).json({"error":error}).end();
-    }
-    if(quantity === undefined){
-        let error = "Expected property quantity";
-        console.log("Error: ", error);
-        return res.status(400).json({"error":error}).end();
-    }
-    return;
+exports.addItem = functions.https.onCall((data, context) => {
+  const item = data.item;
+  const location = data.location;
+  const quantity = data.quantity;
+  validateRequestBody(item, quantity, location);
+
+  const itemList = [];
+  return itemCollection
+    .where("item", "==", item)
+    .where("location", "==", location)
+    .get()
+    .then(function (querySnapshot) {
+      querySnapshot.forEach(function (doc) {
+        // doc.data() is never undefined for query doc snapshots
+        itemList.push({ id: doc.id, ...doc.data() });
+      });
+      if (itemList.length > 1) {
+        console.log("Matching items already exist: ", itemList.length);
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Document already exists"
+        );
+      } else {
+        return db
+          .collection("items")
+          .add({
+            item: item,
+            location: location,
+            quantity: quantity,
+          })
+          .then(function (docRef) {
+            console.log("Document written with ID: ", docRef.id);
+            var writtenDoc = itemCollection.doc(docRef.id);
+            return writtenDoc
+              .get()
+              .then(function (doc) {
+                console.log("Document data:", doc.data());
+                return { id: doc.id, data: doc.data() };
+              })
+              .catch(function (error) {
+                throw new functions.https.HttpsError(
+                  "internal",
+                  "Error getting document: " + error
+                ).end;
+              });
+          })
+          .catch(function (error) {
+            console.error("Error adding document: ", error);
+            throw new functions.https.HttpsError(
+              "internal",
+              "Error adding document: " + error
+            );
+          });
+      }
+    })
+    .catch(function (error) {
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error getting document: " + error
+      );
+    });
+});
+
+exports.updateItem = functions.https.onCall((data, context) => {
+  const id = data.id;
+  if (!id) {
+    throw new functions.https.HttpsError("invalid-argument", "No id");
+  }
+  const item = data.item;
+  const location = data.location;
+  const quantity = data.quantity;
+  validateRequestBody(item, quantity, location);
+
+  console.log("Updating item with id", id);
+  return db
+    .collection("items")
+    .doc(id)
+    .update({
+      location: location,
+      quantity: quantity,
+      item: item,
+    })
+    .then(function () {
+      console.log("Document successfully written!");
+      var docRef = itemCollection.doc(id);
+      return docRef
+        .get()
+        .then(function (doc) {
+          console.log("Document data:", doc.data());
+          return { id: doc.id, data: doc.data() };
+        })
+        .catch(function (error) {
+          throw new functions.https.HttpsError(
+            "internal",
+            "Error getting document: " + error
+          ).end;
+        });
+    })
+    .catch(function (error) {
+      console.error("Error updating document: ", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error updating document: " + error
+      );
+    });
+});
+
+exports.deleteItem = functions.https.onCall((data, context) => {
+  const id = data.id;
+  if (!id) {
+    throw new functions.https.HttpsError("invalid-argument", "No id");
+  }
+
+  itemCollection
+    .doc(id)
+    .delete()
+    .then(function () {
+      console.log("Document successfully deleted!");
+      return {};
+    })
+    .catch(function (error) {
+      console.error("Error deleting document: ", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error deleting document: " + error
+      );
+    });
+});
+
+function validateRequestBody(item, quantity, location) {
+  if (!location) {
+    let error = "Expected property location";
+    console.log("Error: ", error);
+    //TODO
+    return res.status(400).json({ error: error }).end();
+  }
+  if (!item) {
+    let error = "Expected property item";
+    console.log("Error: ", error);
+    //TODO
+    return res.status(400).json({ error: error }).end();
+  }
+  if (quantity === undefined) {
+    let error = "Expected property quantity";
+    console.log("Error: ", error);
+    //TODO
+    return res.status(400).json({ error: error }).end();
+  }
+  return;
 }

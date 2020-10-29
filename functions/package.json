@@ -11,7 +11,7 @@
     "test": "mocha --reporter spec test/index.test.js --exit"
   },
   "engines": {
-    "node": "14"
+    "node": "10"
   },
   "main": "index.js",
   "dependencies": {
