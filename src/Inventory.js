@@ -76,12 +76,11 @@ class Inventory extends React.Component {
     getAllItems({})
       .then((result) => {
         // Read result of the Cloud Function.
-        console.log("result: ", result);
         var items = result.data.items;
-        console.log("ITEMS ", items);
+        console.log("Loading items ", items);
         this.setState({
           isLoaded: true,
-          items: result.items,
+          items: items,
         });
       })
       .catch((error) => {
@@ -159,7 +158,7 @@ class Inventory extends React.Component {
                   if (oldData) {
                     this.setState((prevState) => {
                       const data = [...prevState.data];
-                      data[data.indexOf(oldData)] = newData;
+                          data[data.indexOf(oldData)] = newData;
                       return { ...prevState, data };
                     });
                   }
