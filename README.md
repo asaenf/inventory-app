@@ -1,12 +1,12 @@
-## Firebase cloud functions 
+## Firebase cloud functions
 
-### emulators 
+### emulators
 
 `functions/ firebase emulators:start`
 
 ### deploy
- 
-`firebase deploy --only functions` 
+
+`firebase deploy --only functions`
 
 ## Code format
 

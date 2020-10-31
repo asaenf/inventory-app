@@ -42,7 +42,7 @@ exports.getItem = functions.https.onCall((data, context) => {
     .catch(function (error) {
       throw new functions.https.HttpsError(
         "internal",
-        "Error getting document: " + error
+        "Error getting item: " + error
       );
     });
 });
@@ -58,8 +58,14 @@ exports.getItemById = functions.https.onCall((data, context) => {
     .get()
     .then(function (doc) {
       if (doc.exists) {
-        console.log("Document data:", doc.data());
-        return { id: doc.id, data: doc.data() };
+        var docData = doc.data();
+        console.log("Got document:", docData);
+        return {
+          id: doc.id,
+          item: docData.item,
+          location: docData.location,
+          quantity: docData.quantity,
+        };
       } else {
         console.log("No such document!");
         return {};
@@ -74,6 +80,7 @@ exports.getItemById = functions.https.onCall((data, context) => {
 });
 
 exports.getAllItems = functions.https.onCall((data, context) => {
+  console.log("Getting all documents");
   return db
     .collection("items")
     .get()
@@ -89,7 +96,7 @@ exports.getAllItems = functions.https.onCall((data, context) => {
       console.log("Error getting documents:", error);
       throw new functions.https.HttpsError(
         "internal",
-        "Error getting documents: " + error
+        "Error getting all documents: " + error
       );
     });
 });
@@ -99,24 +106,25 @@ exports.addItem = functions.https.onCall((data, context) => {
   const location = data.location;
   const quantity = data.quantity;
   validateRequestBody(item, quantity, location);
+  console.log("Adding item: ", item);
 
-  const itemList = [];
+  var exists = false;
   return itemCollection
     .where("item", "==", item)
     .where("location", "==", location)
     .get()
     .then(function (querySnapshot) {
       querySnapshot.forEach(function (doc) {
-        // doc.data() is never undefined for query doc snapshots
-        itemList.push({ id: doc.id, ...doc.data() });
+        exists = true;
       });
-      if (itemList.length > 1) {
-        console.log("Matching items already exist: ", itemList.length);
+      if (exists) {
+        console.log("Matching items already exist ");
         throw new functions.https.HttpsError(
           "invalid-argument",
-          "Document already exists"
+          "Item already exists"
         );
       } else {
+        console.log("Item does not already exist, adding");
         return db
           .collection("items")
           .add({
@@ -130,13 +138,19 @@ exports.addItem = functions.https.onCall((data, context) => {
             return writtenDoc
               .get()
               .then(function (doc) {
-                console.log("Document data:", doc.data());
-                return { id: doc.id, data: doc.data() };
+                var docData = doc.data();
+                console.log("Added document data:", docData);
+                return {
+                  id: doc.id,
+                  item: docData.item,
+                  location: docData.location,
+                  quantity: docData.quantity,
+                };
               })
               .catch(function (error) {
                 throw new functions.https.HttpsError(
                   "internal",
-                  "Error getting document: " + error
+                  "Error getting added item: " + error
                 ).end;
               });
           })
@@ -144,7 +158,7 @@ exports.addItem = functions.https.onCall((data, context) => {
             console.error("Error adding document: ", error);
             throw new functions.https.HttpsError(
               "internal",
-              "Error adding document: " + error
+              "Error adding item: " + error
             );
           });
       }
@@ -152,7 +166,7 @@ exports.addItem = functions.https.onCall((data, context) => {
     .catch(function (error) {
       throw new functions.https.HttpsError(
         "internal",
-        "Error getting document: " + error
+        "Error adding item: " + error
       );
     });
 });
@@ -182,13 +196,19 @@ exports.updateItem = functions.https.onCall((data, context) => {
       return docRef
         .get()
         .then(function (doc) {
-          console.log("Document data:", doc.data());
-          return { id: doc.id, data: doc.data() };
+          var docData = doc.data();
+          console.log("Updated document data:", docData);
+          return {
+            id: doc.id,
+            item: docData.item,
+            location: docData.location,
+            quantity: docData.quantity,
+          };
         })
         .catch(function (error) {
           throw new functions.https.HttpsError(
             "internal",
-            "Error getting document: " + error
+            "Error getting updated item: " + error
           ).end;
         });
     })
@@ -196,7 +216,7 @@ exports.updateItem = functions.https.onCall((data, context) => {
       console.error("Error updating document: ", error);
       throw new functions.https.HttpsError(
         "internal",
-        "Error updating document: " + error
+        "Error updating item: " + error
       );
     });
 });
@@ -206,7 +226,7 @@ exports.deleteItem = functions.https.onCall((data, context) => {
   if (!id) {
     throw new functions.https.HttpsError("invalid-argument", "No id");
   }
-
+  console.log("request to delete document ", id);
   itemCollection
     .doc(id)
     .delete()
@@ -218,26 +238,26 @@ exports.deleteItem = functions.https.onCall((data, context) => {
       console.error("Error deleting document: ", error);
       throw new functions.https.HttpsError(
         "internal",
-        "Error deleting document: " + error
+        "Error deleting item: " + error
       );
     });
 });
 
 function validateRequestBody(item, quantity, location) {
   if (!location) {
-    let error = "Expected property location";
+    let error = "Expected property: location";
     console.log("Error: ", error);
     //TODO
     return res.status(400).json({ error: error }).end();
   }
   if (!item) {
-    let error = "Expected property item";
+    let error = "Expected property: item";
     console.log("Error: ", error);
     //TODO
     return res.status(400).json({ error: error }).end();
   }
   if (quantity === undefined) {
-    let error = "Expected property quantity";
+    let error = "Expected property: quantity";
     console.log("Error: ", error);
     //TODO
     return res.status(400).json({ error: error }).end();

@@ -18,19 +18,8 @@ import SaveAlt from "@material-ui/icons/SaveAlt";
 import Search from "@material-ui/icons/Search";
 import ViewColumn from "@material-ui/icons/ViewColumn";
 
-const firebase = require("firebase");
-// Required for side-effects
-require("firebase/functions");
-firebase.initializeApp({
-  apiKey: "AIzaSyCuWFr0BZjE-wTQz__fElsgwk4BQPBk-60",
-  authDomain: "### FIREBASE AUTH DOMAIN ###",
-  projectId: "inventoryapp-276220",
-  databaseURL: "https://inventoryapp.firebaseio.com",
-});
-
-firebase.functions().useFunctionsEmulator("http://localhost:5001");
-// Initialize Cloud Functions through Firebase
-var functions = firebase.functions();
+import ErrorDialog from "./ErrorDialog.js";
+import functions from "./FirebaseFunctions.js";
 
 const tableIcons = {
   Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -56,6 +45,11 @@ const tableIcons = {
   ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
 };
 
+var getAllItems = functions.httpsCallable("getAllItems");
+var addItem = functions.httpsCallable("addItem");
+var updateItem = functions.httpsCallable("updateItem");
+var deleteItem = functions.httpsCallable("deleteItem");
+
 class Inventory extends React.Component {
   constructor(props) {
     super(props);
@@ -64,33 +58,34 @@ class Inventory extends React.Component {
     this.getTableColumns = this.getTableColumns.bind(this);
     this.setState = this.setState.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
+    this.loadItems = this.loadItems.bind(this);
+    this.setErrorDialogOpen = this.setErrorDialogOpen.bind(this);
+    this.handleError = this.handleError.bind(this);
     this.state = {
       items: [],
-      isLoaded: false,
       error: "",
+      errorDialogOpen: false,
     };
   }
 
   componentDidMount() {
-    var getAllItems = functions.httpsCallable("getAllItems");
+    this.loadItems();
+  }
+
+  loadItems = function () {
     getAllItems({})
       .then((result) => {
         // Read result of the Cloud Function.
         var items = result.data.items;
         console.log("Loading items ", items);
         this.setState({
-          isLoaded: true,
           items: items,
         });
       })
       .catch((error) => {
-        // Getting the Error details.
-        this.setState({
-          isLoaded: true,
-          error: error.message,
-        });
+        this.handleError(error);
       });
-  }
+  };
 
   getTableColumns = function () {
     return [
@@ -103,33 +98,35 @@ class Inventory extends React.Component {
   getTableData = function () {
     const items = this.state.items;
     return items;
-    //    return [
-    //      {
-    //        item: "Gurka",
-    //        quantity: 63,
-    //        location: "nere",
-    //      },
-    //      {
-    //        item: "Veg hamburgare",
-    //        quantity: 2,
-    //        location: "nere",
-    //      },
-    //      {
-    //        item: "Paprika",
-    //        quantity: 1,
-    //        location: "uppe",
-    //      },
-    //      {
-    //        item: "Paprika",
-    //        quantity: 1,
-    //        location: "aspöja",
-    //      },
-    //    ];
+  };
+
+  handleError = function (error) {
+    this.setState({
+      error: error.message,
+    });
+    this.setErrorDialogOpen(true);
+  };
+
+  setErrorDialogOpen = function (isOpen) {
+    console.log("set error dialog: ", isOpen);
+    if (!isOpen) {
+      this.setState({
+        error: "",
+      });
+    }
+    this.setState({
+      errorDialogOpen: isOpen,
+    });
   };
 
   render() {
     return (
       <div style={{ maxWidth: "100%" }}>
+        <ErrorDialog
+          open={this.state.errorDialogOpen}
+          onClose={() => this.setErrorDialogOpen(false)}
+          error={this.state.error}
+        />
         <MaterialTable
           icons={tableIcons}
           columns={this.getTableColumns()}
@@ -144,35 +141,67 @@ class Inventory extends React.Component {
               new Promise((resolve) => {
                 setTimeout(() => {
                   resolve();
-                  this.setState((prevState) => {
-                    const data = [...prevState.data];
-                    data.push(newData);
-                    return { ...prevState, data };
-                  });
+                  console.log("Adding item: ", newData);
+                  addItem(newData)
+                    .then((result) => {
+                      // Read result of the Cloud Function.
+                      var addedItem = result.data;
+                      console.log("Item added ", addedItem);
+                      const existingData = this.state.items.slice();
+                      existingData.push(addedItem);
+                      this.setState({
+                        items: existingData,
+                      });
+                    })
+                    .catch((error) => {
+                      this.handleError(error);
+                    });
                 }, 600);
               }),
+
             onRowUpdate: (newData, oldData) =>
               new Promise((resolve) => {
+                console.log(
+                  "Updating. New data ",
+                  newData,
+                  "old data ",
+                  oldData
+                );
                 setTimeout(() => {
                   resolve();
-                  if (oldData) {
-                    this.setState((prevState) => {
-                      const data = [...prevState.data];
-                          data[data.indexOf(oldData)] = newData;
-                      return { ...prevState, data };
+                  updateItem(newData)
+                    .then((result) => {
+                      // Read result of the Cloud Function.
+                      var updatedItem = result.data;
+                      console.log("Item updated ", updatedItem);
+                      const existingData = this.state.items.slice();
+                      existingData[existingData.indexOf(oldData)] = newData;
+                      this.setState({
+                        items: existingData,
+                      });
+                    })
+                    .catch((error) => {
+                      this.handleError(error);
                     });
-                  }
                 }, 600);
               }),
+
             onRowDelete: (oldData) =>
               new Promise((resolve) => {
                 setTimeout(() => {
                   resolve();
-                  this.setState((prevState) => {
-                    const data = [...prevState.data];
-                    data.splice(data.indexOf(oldData), 1);
-                    return { ...prevState, data };
-                  });
+                  deleteItem(oldData)
+                    .then((result) => {
+                      console.log("Item deleted ", oldData);
+                      const existingData = this.state.items.slice();
+                      existingData.splice(existingData.indexOf(oldData), 1);
+                      this.setState({
+                        items: existingData,
+                      });
+                    })
+                    .catch((error) => {
+                      this.handleError(error);
+                    });
                 }, 600);
               }),
           }}
