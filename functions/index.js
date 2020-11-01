@@ -4,6 +4,8 @@ const functions = require("firebase-functions");
 // The Firebase Admin SDK to access Cloud Firestore.
 const firebase = require("firebase-admin");
 firebase.initializeApp({
+  //The Firebase config object contains unique, but non-secret identifiers for your Firebase project.
+  //https://firebase.google.com/docs/projects/learn-more#config-files-objects
   apiKey: "AIzaSyCuWFr0BZjE-wTQz__fElsgwk4BQPBk-60",
   authDomain: "### FIREBASE AUTH DOMAIN ###",
   projectId: "inventoryapp-276220",
