@@ -19,7 +19,9 @@ import Search from "@material-ui/icons/Search";
 import ViewColumn from "@material-ui/icons/ViewColumn";
 
 import ErrorDialog from "./ErrorDialog.js";
-import functions from "./FirebaseFunctions.js";
+import firebase from "./FirebaseFunctions.js";
+
+var functions = firebase.functions();
 
 const tableIcons = {
   Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),

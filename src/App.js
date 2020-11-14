@@ -1,13 +1,19 @@
 import React from "react";
-import Inventory from "./Inventory.js";
+import SignInForm from "./SignInForm.js";
+import MainContainer from "./MainContainer.js";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { ProvideAuth } from "./use-auth.js";
 
-function App() {
+function App(props) {
   return (
-    <div className="App">
-      <header className="App-header">
-        <Inventory />
-      </header>
-    </div>
+    <ProvideAuth>
+      <BrowserRouter>
+        <Switch>
+          <Route path="/inventory" component={MainContainer} />
+          <Route path="/signin" component={SignInForm} />
+        </Switch>
+      </BrowserRouter>
+    </ProvideAuth>
   );
 }
 
