@@ -11,6 +11,7 @@ firebase.initializeApp({
   databaseURL: "https://inventoryapp.firebaseio.com",
 });
 
+//when running locally uncomment
 //firebase.functions().useFunctionsEmulator("http://localhost:5001");
 
 export default firebase;

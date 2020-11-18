@@ -7,6 +7,8 @@ import ArrowDownward from "@material-ui/icons/ArrowDownward";
 import Check from "@material-ui/icons/Check";
 import ChevronLeft from "@material-ui/icons/ChevronLeft";
 import ChevronRight from "@material-ui/icons/ChevronRight";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Container from "@material-ui/core/Container";
 import Clear from "@material-ui/icons/Clear";
 import DeleteOutline from "@material-ui/icons/DeleteOutline";
 import Edit from "@material-ui/icons/Edit";
@@ -67,6 +69,7 @@ class Inventory extends React.Component {
       items: [],
       error: "",
       errorDialogOpen: false,
+      dataLoaded: false,
     };
   }
 
@@ -82,6 +85,7 @@ class Inventory extends React.Component {
         console.log("Loading items ", items);
         this.setState({
           items: items,
+          dataLoaded: true,
         });
       })
       .catch((error) => {
@@ -123,92 +127,98 @@ class Inventory extends React.Component {
 
   render() {
     return (
-      <div style={{ maxWidth: "100%" }}>
-        <ErrorDialog
-          open={this.state.errorDialogOpen}
-          onClose={() => this.setErrorDialogOpen(false)}
-          error={this.state.error}
-        />
-        <MaterialTable
-          icons={tableIcons}
-          columns={this.getTableColumns()}
-          data={this.getTableData()}
-          options={{
-            actionsColumnIndex: -1,
-            filtering: true,
-          }}
-          title="Inventory"
-          editable={{
-            onRowAdd: (newData) =>
-              new Promise((resolve) => {
-                setTimeout(() => {
-                  resolve();
-                  console.log("Adding item: ", newData);
-                  addItem(newData)
-                    .then((result) => {
-                      // Read result of the Cloud Function.
-                      var addedItem = result.data;
-                      console.log("Item added ", addedItem);
-                      const existingData = this.state.items.slice();
-                      existingData.push(addedItem);
-                      this.setState({
-                        items: existingData,
-                      });
-                    })
-                    .catch((error) => {
-                      this.handleError(error);
-                    });
-                }, 600);
-              }),
+      <Container component="main">
+        {!this.state.dataLoaded ? (
+          <CircularProgress />
+        ) : (
+          <div style={{ maxWidth: "100%" }}>
+            <ErrorDialog
+              open={this.state.errorDialogOpen}
+              onClose={() => this.setErrorDialogOpen(false)}
+              error={this.state.error}
+            />
+            <MaterialTable
+              icons={tableIcons}
+              columns={this.getTableColumns()}
+              data={this.getTableData()}
+              options={{
+                actionsColumnIndex: -1,
+                filtering: true,
+              }}
+              title="Inventory"
+              editable={{
+                onRowAdd: (newData) =>
+                  new Promise((resolve) => {
+                    setTimeout(() => {
+                      resolve();
+                      console.log("Adding item: ", newData);
+                      addItem(newData)
+                        .then((result) => {
+                          // Read result of the Cloud Function.
+                          var addedItem = result.data;
+                          console.log("Item added ", addedItem);
+                          const existingData = this.state.items.slice();
+                          existingData.push(addedItem);
+                          this.setState({
+                            items: existingData,
+                          });
+                        })
+                        .catch((error) => {
+                          this.handleError(error);
+                        });
+                    }, 600);
+                  }),
 
-            onRowUpdate: (newData, oldData) =>
-              new Promise((resolve) => {
-                console.log(
-                  "Updating. New data ",
-                  newData,
-                  "old data ",
-                  oldData
-                );
-                setTimeout(() => {
-                  resolve();
-                  updateItem(newData)
-                    .then((result) => {
-                      // Read result of the Cloud Function.
-                      var updatedItem = result.data;
-                      console.log("Item updated ", updatedItem);
-                      const existingData = this.state.items.slice();
-                      existingData[existingData.indexOf(oldData)] = newData;
-                      this.setState({
-                        items: existingData,
-                      });
-                    })
-                    .catch((error) => {
-                      this.handleError(error);
-                    });
-                }, 600);
-              }),
+                onRowUpdate: (newData, oldData) =>
+                  new Promise((resolve) => {
+                    console.log(
+                      "Updating. New data ",
+                      newData,
+                      "old data ",
+                      oldData
+                    );
+                    setTimeout(() => {
+                      resolve();
+                      updateItem(newData)
+                        .then((result) => {
+                          // Read result of the Cloud Function.
+                          var updatedItem = result.data;
+                          console.log("Item updated ", updatedItem);
+                          const existingData = this.state.items.slice();
+                          existingData[existingData.indexOf(oldData)] = newData;
+                          this.setState({
+                            items: existingData,
+                          });
+                        })
+                        .catch((error) => {
+                          this.handleError(error);
+                        });
+                    }, 600);
+                  }),
 
-            onRowDelete: (oldData) =>
-              new Promise((resolve) => {
-                setTimeout(() => {
-                  resolve();
-                  deleteItem(oldData)
-                    .then((result) => {
-                      console.log("Item deleted ", oldData);
-                      const existingData = this.state.items.slice();
-                      existingData.splice(existingData.indexOf(oldData), 1);
-                      this.setState({
-                        items: existingData,
-                      });
-                    })
-                    .catch((error) => {
-                      this.handleError(error);
-                    });
-                }, 600);
-              }),
-          }}
-        />
-      </div>
+                onRowDelete: (oldData) =>
+                  new Promise((resolve) => {
+                    setTimeout(() => {
+                      resolve();
+                      deleteItem(oldData)
+                        .then((result) => {
+                          console.log("Item deleted ", oldData);
+                          const existingData = this.state.items.slice();
+                          existingData.splice(existingData.indexOf(oldData), 1);
+                          this.setState({
+                            items: existingData,
+                          });
+                        })
+                        .catch((error) => {
+                          this.handleError(error);
+                        });
+                    }, 600);
+                  }),
+              }}
+            />
+          </div>
+        )}
+      </Container>
     );
   }
 }
