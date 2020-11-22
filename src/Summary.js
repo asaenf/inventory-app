@@ -3,7 +3,6 @@ import { makeStyles } from "@material-ui/core/styles";
 import { forwardRef } from "react";
 import MaterialTable from "material-table";
 
-
 import ArrowDownward from "@material-ui/icons/ArrowDownward";
 import Check from "@material-ui/icons/Check";
 import ChevronLeft from "@material-ui/icons/ChevronLeft";
@@ -105,12 +104,13 @@ export default function Summary() {
           <MaterialTable
             icons={tableIcons}
             columns={[
-              { title: "Product", field: "item" },
+              { title: "Product", field: "item", defaultSort: "asc" },
               { title: "Total", field: "quantity", type: "numeric" },
             ]}
             data={data}
             options={{
               filtering: true,
+              sorting: true,
             }}
             title="Summary"
           />

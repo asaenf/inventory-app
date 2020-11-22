@@ -14,77 +14,14 @@ firebase.initializeApp({
 
 var db = firebase.firestore();
 
-var itemCollection = db.collection("items");
-
-exports.getItem = functions.https.onCall((data, context) => {
-  const item = data.item;
-  const location = data.location;
-  if (!item || !location) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "No item/location supplied"
-    );
-  }
-  console.log("item: ", item, " location ", location);
-  const itemList = [];
-  return itemCollection
-    .where("item", "==", item)
-    .where("location", "==", location)
-    .get()
-    .then(function (querySnapshot) {
-      querySnapshot.forEach(function (doc) {
-        // doc.data() is never undefined for query doc snapshots
-        itemList.push({ id: doc.id, ...doc.data() });
-      });
-      console.log("Found ", itemList.length, " items");
-      return {
-        items: itemList,
-      };
-    })
-    .catch(function (error) {
-      throw new functions.https.HttpsError(
-        "internal",
-        "Error getting item: " + error
-      );
-    });
-});
-
-exports.getItemById = functions.https.onCall((data, context) => {
-  const id = data.id;
-  if (!id) {
-    throw new functions.https.HttpsError("invalid-argument", "No id");
-  }
-  var docRef = itemCollection.doc(id);
-  var foundDoc = null;
-  return docRef
-    .get()
-    .then(function (doc) {
-      if (doc.exists) {
-        var docData = doc.data();
-        console.log("Got document:", docData);
-        return {
-          id: doc.id,
-          item: docData.item,
-          location: docData.location,
-          quantity: docData.quantity,
-        };
-      } else {
-        console.log("No such document!");
-        return {};
-      }
-    })
-    .catch(function (error) {
-      throw new functions.https.HttpsError(
-        "internal",
-        "Error getting document: " + error
-      ).end;
-    });
-});
+var itemCollectionHemma = db.collection("items");
+var itemCollectionAspoja = db.collection("items-aspoja");
+var itemCollectionTannas = db.collection("items-tannas");
+var itemCollection = itemCollectionHemma;
 
 exports.getAllItems = functions.https.onCall((data, context) => {
   console.log("Getting all documents");
-  return db
-    .collection("items")
+  return itemCollection
     .get()
     .then((querySnapshot) => {
       const itemList = [];
@@ -127,8 +64,7 @@ exports.addItem = functions.https.onCall((data, context) => {
         );
       } else {
         console.log("Item does not already exist, adding");
-        return db
-          .collection("items")
+        return itemCollection
           .add({
             item: item,
             location: location,
@@ -184,8 +120,7 @@ exports.updateItem = functions.https.onCall((data, context) => {
   validateRequestBody(item, quantity, location);
 
   console.log("Updating item with id", id);
-  return db
-    .collection("items")
+  return itemCollection
     .doc(id)
     .update({
       location: location,

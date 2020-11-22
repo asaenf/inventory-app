@@ -95,7 +95,7 @@ class Inventory extends React.Component {
 
   getTableColumns = function () {
     return [
-      { title: "Product", field: "item" },
+      { title: "Product", field: "item", defaultSort: "asc" },
       { title: "Quantity", field: "quantity", type: "numeric" },
       { title: "Location", field: "location" },
     ];
@@ -144,6 +144,7 @@ class Inventory extends React.Component {
               options={{
                 actionsColumnIndex: -1,
                 filtering: true,
+                sorting: true,
               }}
               title="Inventory"
               editable={{
