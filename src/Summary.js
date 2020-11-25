@@ -49,6 +49,8 @@ const tableIcons = {
   ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
 };
 
+const collectionName = process.env.REACT_APP_FIRESTORE_TABLE;
+
 export default function Summary() {
   const classes = useStyles();
   const [data, setData] = useState([]);
@@ -58,7 +60,8 @@ export default function Summary() {
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 
   useEffect(() => {
-    getAllItems({})
+  console.log("Getting all items for summary from collection ",collectionName );
+    getAllItems({ collectionName: collectionName })
       .then((result) => {
         // Read result of the Cloud Function.
         var items = result.data.items;

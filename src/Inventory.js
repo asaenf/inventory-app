@@ -54,6 +54,8 @@ var addItem = functions.httpsCallable("addItem");
 var updateItem = functions.httpsCallable("updateItem");
 var deleteItem = functions.httpsCallable("deleteItem");
 
+const collectionName = process.env.REACT_APP_FIRESTORE_TABLE;
+
 class Inventory extends React.Component {
   constructor(props) {
     super(props);
@@ -78,7 +80,8 @@ class Inventory extends React.Component {
   }
 
   loadItems = function () {
-    getAllItems({})
+    console.log("Getting all items from collection ", collectionName);
+    getAllItems({ collectionName: collectionName })
       .then((result) => {
         // Read result of the Cloud Function.
         var items = result.data.items;
@@ -98,6 +101,7 @@ class Inventory extends React.Component {
       { title: "Product", field: "item", defaultSort: "asc" },
       { title: "Quantity", field: "quantity", type: "numeric" },
       { title: "Location", field: "location" },
+      { title: "Comment", field: "comment" },
     ];
   };
 
@@ -128,7 +132,7 @@ class Inventory extends React.Component {
   render() {
     return (
       <Container component="main">
-        {!this.state.dataLoaded ? (
+        {!this.state.dataLoaded && !this.state.errorDialogOpen ? (
           <CircularProgress />
         ) : (
           <div style={{ maxWidth: "100%" }}>
@@ -152,6 +156,7 @@ class Inventory extends React.Component {
                   new Promise((resolve) => {
                     setTimeout(() => {
                       resolve();
+                      newData.collectionName = collectionName;
                       console.log("Adding item: ", newData);
                       addItem(newData)
                         .then((result) => {
@@ -180,6 +185,7 @@ class Inventory extends React.Component {
                     );
                     setTimeout(() => {
                       resolve();
+                      newData.collectionName = collectionName;
                       updateItem(newData)
                         .then((result) => {
                           // Read result of the Cloud Function.
@@ -201,6 +207,7 @@ class Inventory extends React.Component {
                   new Promise((resolve) => {
                     setTimeout(() => {
                       resolve();
+                      oldData.collectionName = collectionName;
                       deleteItem(oldData)
                         .then((result) => {
                           console.log("Item deleted ", oldData);

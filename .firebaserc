@@ -1,5 +1,20 @@
 {
   "projects": {
     "default": "inventoryapp-276220"
+  },
+  "targets": {
+    "inventoryapp-276220": {
+      "hosting": {
+        "tannas": [
+          "inventory-tannas"
+        ],
+        "aspoja": [
+          "inventory-aspoja"
+        ],
+        "smido": [
+          "inventoryapp-276220"
+        ]
+      }
+    }
   }
 }

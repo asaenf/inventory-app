@@ -14,13 +14,11 @@ firebase.initializeApp({
 
 var db = firebase.firestore();
 
-var itemCollectionHemma = db.collection("items");
-var itemCollectionAspoja = db.collection("items-aspoja");
-var itemCollectionTannas = db.collection("items-tannas");
-var itemCollection = itemCollectionHemma;
-
 exports.getAllItems = functions.https.onCall((data, context) => {
-  console.log("Getting all documents");
+  console.log("Getting all documents, collectionName ", data.collectionName);
+  const collectionName = getCollectionName(data.collectionName);
+  var itemCollection = db.collection(collectionName);
+
   return itemCollection
     .get()
     .then((querySnapshot) => {
@@ -41,16 +39,21 @@ exports.getAllItems = functions.https.onCall((data, context) => {
 });
 
 exports.addItem = functions.https.onCall((data, context) => {
+  console.log("Add item, collection name: ", data.collectionName);
+  const collectionName = getCollectionName(data.collectionName);
+  var itemCollection = db.collection(collectionName);
+
   const item = data.item;
-  const location = data.location;
+  const location = data.location || "";
   const quantity = data.quantity;
-  validateRequestBody(item, quantity, location);
-  console.log("Adding item: ", item);
+  const comment = data.comment || "";
+  validateRequestBody(item, quantity);
 
   var exists = false;
   return itemCollection
     .where("item", "==", item)
     .where("location", "==", location)
+    .where("comment", "==", comment)
     .get()
     .then(function (querySnapshot) {
       querySnapshot.forEach(function (doc) {
@@ -69,6 +72,7 @@ exports.addItem = functions.https.onCall((data, context) => {
             item: item,
             location: location,
             quantity: quantity,
+            comment: comment,
           })
           .then(function (docRef) {
             console.log("Document written with ID: ", docRef.id);
@@ -83,6 +87,7 @@ exports.addItem = functions.https.onCall((data, context) => {
                   item: docData.item,
                   location: docData.location,
                   quantity: docData.quantity,
+                  comment: docData.comment,
                 };
               })
               .catch(function (error) {
@@ -110,14 +115,19 @@ exports.addItem = functions.https.onCall((data, context) => {
 });
 
 exports.updateItem = functions.https.onCall((data, context) => {
+  console.log("Update item, collection name: ", data.collectionName);
+  const collectionName = getCollectionName(data.collectionName);
+  var itemCollection = db.collection(collectionName);
+
   const id = data.id;
   if (!id) {
     throw new functions.https.HttpsError("invalid-argument", "No id");
   }
   const item = data.item;
-  const location = data.location;
+  const location = data.location || "";
   const quantity = data.quantity;
-  validateRequestBody(item, quantity, location);
+  const comment = data.comment || "";
+  validateRequestBody(item, quantity);
 
   console.log("Updating item with id", id);
   return itemCollection
@@ -126,6 +136,7 @@ exports.updateItem = functions.https.onCall((data, context) => {
       location: location,
       quantity: quantity,
       item: item,
+      comment: comment,
     })
     .then(function () {
       console.log("Document successfully written!");
@@ -140,6 +151,7 @@ exports.updateItem = functions.https.onCall((data, context) => {
             item: docData.item,
             location: docData.location,
             quantity: docData.quantity,
+            comment: docData.comment,
           };
         })
         .catch(function (error) {
@@ -159,6 +171,10 @@ exports.updateItem = functions.https.onCall((data, context) => {
 });
 
 exports.deleteItem = functions.https.onCall((data, context) => {
+  console.log("Delete item, collection name: ", data.collectionName);
+  const collectionName = getCollectionName(data.collectionName);
+  var itemCollection = db.collection(collectionName);
+
   const id = data.id;
   if (!id) {
     throw new functions.https.HttpsError("invalid-argument", "No id");
@@ -180,24 +196,27 @@ exports.deleteItem = functions.https.onCall((data, context) => {
     });
 });
 
-function validateRequestBody(item, quantity, location) {
-  if (!location) {
-    let error = "Expected property: location";
+function getCollectionName(collectionName) {
+  console.log("getCollectionName input:", collectionName);
+  if (!collectionName || collectionName === "") {
+    let error = "Expected property: collectionName";
     console.log("Error: ", error);
-    //TODO
-    return res.status(400).json({ error: error }).end();
+    throw new Error(error);
   }
+  console.log("getCollectionName return:", collectionName);
+  return collectionName;
+}
+
+function validateRequestBody(item, quantity) {
   if (!item) {
     let error = "Expected property: item";
     console.log("Error: ", error);
-    //TODO
-    return res.status(400).json({ error: error }).end();
+    throw new Error(error);
   }
   if (quantity === undefined) {
     let error = "Expected property: quantity";
     console.log("Error: ", error);
-    //TODO
-    return res.status(400).json({ error: error }).end();
+    throw new Error(error);
   }
   return;
 }

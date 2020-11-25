@@ -1,4 +1,5 @@
 import { React, Fragment, Link, useState } from "react";
+import { Helmet } from "react-helmet";
 import AppBar from "@material-ui/core/AppBar";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
@@ -45,6 +46,7 @@ function MainContainer(props) {
   const router = useRouter();
   const classes = useStyles();
   const [tab, setTab] = useState(0);
+  const title = process.env.REACT_APP_TITLE;
 
   const handleTabClick = (event, newValue) => {
     setTab(newValue);
@@ -54,6 +56,9 @@ function MainContainer(props) {
     console.log("User not authenticated, redirecting");
     return (
       <div className={classes.root}>
+        <Helmet>
+          <title>{title}</title>
+        </Helmet>
         <AppBar position="sticky">
           <Toolbar>
             <Button onClick={() => router.push("/signin")}>Signin</Button>

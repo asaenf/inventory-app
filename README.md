@@ -4,13 +4,31 @@
 
 `functions/ firebase emulators:start`
 
+Note: Uncomment firebase.functions().useFunctionsEmulator in FirebaseFunctions.js
+
 ### deploy
 
 `firebase deploy --only functions`
 
-## Code format
+## React app
+
+### Code format
 
 `npx prettier --write .`
+
+### Production build
+
+Main instance: `npm run build`
+
+Aspoja instance: `npm run build:aspoja`
+
+Tannas instance: `npm run build:tannas`
+
+### Production deploy firebase hosting
+
+`firebase deploy --only hosting:TARGET_NAME`
+
+Note that all builds output to /build so you can only deploy the latest built instance, not all in one go.
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

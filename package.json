@@ -8,10 +8,12 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
+    "env-cmd": "^10.1.0",
     "firebase": "^7.19.1",
     "material-table": "^1.69.1",
     "react": "^16.8.0",
     "react-dom": "^16.8.0",
+    "react-helmet": "^6.1.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.0",
     "typescript": "^3.9.7"
@@ -21,7 +23,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build:smido": "env-cmd -f .env.smido react-scripts build",
+    "build:aspoja": "env-cmd -f .env.aspoja react-scripts build",
+    "build:tannas": "env-cmd -f .env.tannas react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
