@@ -72,9 +72,6 @@ function MainContainer(props) {
       <div className={classes.root}>
         <AppBar position="sticky">
           <Toolbar>
-            <Typography className={classes.title}>
-              Signed in as {auth.user.email}
-            </Typography>
             <Tabs value={tab} onChange={handleTabClick}>
               <Tab label="Inventory" className={classes.tab} />
               <Tab label="Summary" className={classes.tab} />
@@ -85,6 +82,13 @@ function MainContainer(props) {
           </Toolbar>
         </AppBar>
         <MainPage activeTab={tab} />
+        <AppBar position="sticky">
+          <Toolbar>
+            <Typography className={classes.title}>
+              Signed in as {auth.user.email}
+            </Typography>
+          </Toolbar>
+        </AppBar>
       </div>
     );
   }

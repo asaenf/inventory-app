@@ -60,7 +60,10 @@ export default function Summary() {
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 
   useEffect(() => {
-  console.log("Getting all items for summary from collection ",collectionName );
+    console.log(
+      "Getting all items for summary from collection ",
+      collectionName
+    );
     getAllItems({ collectionName: collectionName })
       .then((result) => {
         // Read result of the Cloud Function.

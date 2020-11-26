@@ -150,7 +150,7 @@ class Inventory extends React.Component {
                 filtering: true,
                 sorting: true,
               }}
-              title="Inventory"
+              title=""
               editable={{
                 onRowAdd: (newData) =>
                   new Promise((resolve) => {
