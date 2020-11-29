@@ -47,6 +47,7 @@ exports.addItem = functions.https.onCall((data, context) => {
   const location = data.location || "";
   const quantity = data.quantity;
   const comment = data.comment || "";
+  const category = data.category || "";
   validateRequestBody(item, quantity);
 
   var exists = false;
@@ -54,6 +55,7 @@ exports.addItem = functions.https.onCall((data, context) => {
     .where("item", "==", item)
     .where("location", "==", location)
     .where("comment", "==", comment)
+    .where("category", "==", category)
     .get()
     .then(function (querySnapshot) {
       querySnapshot.forEach(function (doc) {
@@ -73,6 +75,7 @@ exports.addItem = functions.https.onCall((data, context) => {
             location: location,
             quantity: quantity,
             comment: comment,
+            category: category,
           })
           .then(function (docRef) {
             console.log("Document written with ID: ", docRef.id);
@@ -88,6 +91,7 @@ exports.addItem = functions.https.onCall((data, context) => {
                   location: docData.location,
                   quantity: docData.quantity,
                   comment: docData.comment,
+                  category: docData.category,
                 };
               })
               .catch(function (error) {
@@ -127,6 +131,7 @@ exports.updateItem = functions.https.onCall((data, context) => {
   const location = data.location || "";
   const quantity = data.quantity;
   const comment = data.comment || "";
+  const category = data.category || "";
   validateRequestBody(item, quantity);
 
   console.log("Updating item with id", id);
@@ -137,6 +142,7 @@ exports.updateItem = functions.https.onCall((data, context) => {
       quantity: quantity,
       item: item,
       comment: comment,
+      category: category,
     })
     .then(function () {
       console.log("Document successfully written!");
@@ -152,6 +158,7 @@ exports.updateItem = functions.https.onCall((data, context) => {
             location: docData.location,
             quantity: docData.quantity,
             comment: docData.comment,
+            category: docData.category,
           };
         })
         .catch(function (error) {
@@ -192,6 +199,29 @@ exports.deleteItem = functions.https.onCall((data, context) => {
       throw new functions.https.HttpsError(
         "internal",
         "Error deleting item: " + error
+      );
+    });
+});
+
+exports.getAllCategories = functions.https.onCall((data, context) => {
+  console.log("Getting all categories,  ");
+  var categoryCollection = db.collection("categories");
+
+  return categoryCollection
+    .get()
+    .then((querySnapshot) => {
+      const categoryList = [];
+      querySnapshot.forEach((doc) => {
+        categoryList.push({ id: doc.id, ...doc.data() });
+      });
+      console.log("Found ", categoryList.length, " categories");
+      return { categories: categoryList };
+    })
+    .catch(function (error) {
+      console.log("Error getting documents:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error getting all category documents: " + error
       );
     });
 });

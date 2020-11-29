@@ -24,6 +24,8 @@ import firebase from "./FirebaseFunctions.js";
 var functions = firebase.functions();
 
 var getAllItems = functions.httpsCallable("getAllItems");
+var getAllCategories = functions.httpsCallable("getAllCategories");
+
 const collectionName = process.env.REACT_APP_FIRESTORE_TABLE;
 
 const useRowStyles = makeStyles({
@@ -68,6 +70,7 @@ function Row(props) {
                   <TableRow>
                     <TableCell>Quantity</TableCell>
                     <TableCell>Location</TableCell>
+                    <TableCell>Category</TableCell>
                     <TableCell align="right">Comment</TableCell>
                   </TableRow>
                 </TableHead>
@@ -78,6 +81,7 @@ function Row(props) {
                       <TableCell component="th" scope="row">
                         {detailsRow.location}
                       </TableCell>
+                      <TableCell>{detailsRow.categoryName}</TableCell>
                       <TableCell align="right">{detailsRow.comment}</TableCell>
                     </TableRow>
                   ))}
@@ -123,34 +127,64 @@ export default function Summary() {
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 
   useEffect(() => {
-    console.log(
-      "Getting all items for summary from collection ",
-      collectionName
-    );
-    getAllItems({ collectionName: collectionName })
+    console.log("Getting all categories");
+    getAllCategories({})
       .then((result) => {
-        // Read result of the Cloud Function.
-        var items = result.data.items;
-        console.log("calculating total of items ", items);
-        var summedItems = Object.values(
-          items.reduce((c, { item, quantity, location, comment }) => {
-            c[item] = c[item] || { item, total: 0 };
-            c[item].total += quantity;
-            if (c[item].item === item) {
-              if (!c[item].details) {
-                c[item].details = new Array();
-                c[item].details.push({ item, quantity, location, comment });
-              } else {
-                c[item].details.push({ item, quantity, location, comment });
-              }
-            }
-            return c;
-          }, {})
+        var categoriesResponse = result.data.categories;
+        console.log("Categories ", categoriesResponse);
+        var categoryKeyValue = categoriesResponse.reduce(
+          (mapped, { id, category }) => {
+            mapped[id] = category;
+            return mapped;
+          },
+          {}
         );
-        summedItems.sort(compareSummedItems);
-        console.log("summarised items ", summedItems);
-        setData(summedItems);
-        setDataLoaded(true);
+        console.log("Loaded categories ", categoryKeyValue);
+        console.log(
+          "Getting all items for summary from collection ",
+          collectionName
+        );
+        getAllItems({ collectionName: collectionName }).then((result) => {
+          // Read result of the Cloud Function.
+          var items = result.data.items;
+          console.log("calculating total of items ", items);
+          var summedItems = Object.values(
+            items.reduce(
+              (c, { item, quantity, location, comment, category }) => {
+                c[item] = c[item] || { item, total: 0 };
+                c[item].total += quantity;
+                var categoryName = categoryKeyValue[category];
+                console.log("Category name ", categoryName);
+                if (c[item].item === item) {
+                  if (!c[item].details) {
+                    c[item].details = new Array();
+                    c[item].details.push({
+                      item,
+                      quantity,
+                      location,
+                      categoryName,
+                      comment,
+                    });
+                  } else {
+                    c[item].details.push({
+                      item,
+                      quantity,
+                      location,
+                      categoryName,
+                      comment,
+                    });
+                  }
+                }
+                return c;
+              },
+              {}
+            )
+          );
+          summedItems.sort(compareSummedItems);
+          console.log("summarised items ", summedItems);
+          setData(summedItems);
+          setDataLoaded(true);
+        });
       })
       .catch((error) => {
         console.log("error getting data: ", error.message);
@@ -158,7 +192,7 @@ export default function Summary() {
         setErrorCode(error.code);
         shiftErrorDialog(true);
       });
-  });
+  }, []);
 
   let shiftErrorDialog = (isOpen) => {
     console.log("set error dialog: ", isOpen);

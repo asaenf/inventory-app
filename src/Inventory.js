@@ -53,6 +53,7 @@ var getAllItems = functions.httpsCallable("getAllItems");
 var addItem = functions.httpsCallable("addItem");
 var updateItem = functions.httpsCallable("updateItem");
 var deleteItem = functions.httpsCallable("deleteItem");
+var getAllCategories = functions.httpsCallable("getAllCategories");
 
 const collectionName = process.env.REACT_APP_FIRESTORE_TABLE;
 
@@ -67,8 +68,10 @@ class Inventory extends React.Component {
     this.loadItems = this.loadItems.bind(this);
     this.setErrorDialogOpen = this.setErrorDialogOpen.bind(this);
     this.handleError = this.handleError.bind(this);
+    this.categoryLookUp = this.categoryLookUp.bind(this);
     this.state = {
       items: [],
+      categories: [],
       error: "",
       errorDialogOpen: false,
       dataLoaded: false,
@@ -88,12 +91,41 @@ class Inventory extends React.Component {
         console.log("Loading items ", items);
         this.setState({
           items: items,
-          dataLoaded: true,
+        });
+        console.log("Getting all categories");
+        getAllCategories({}).then((result) => {
+          var categories = result.data.categories;
+          categories.sort((category, otherCategory) =>
+            category.category < otherCategory.category
+              ? -1
+              : category.category > otherCategory.category
+              ? 1
+              : 0
+          );
+          console.log("Loaded categories ", categories);
+          this.setState({
+            categories: categories,
+            dataLoaded: true,
+          });
         });
       })
       .catch((error) => {
         this.handleError(error);
       });
+  };
+
+  categoryLookUp = function () {
+    var categoriesKeyValues = this.state.categories.reduce(function (
+      keyValObject,
+      currentCategory
+    ) {
+      //convert to an object with IDs as keys and categories as values
+      keyValObject[currentCategory.id] = currentCategory.category;
+      return keyValObject;
+    },
+    {});
+    console.log("categoriesKeyValues ", categoriesKeyValues);
+    return categoriesKeyValues;
   };
 
   getTableColumns = function () {
@@ -102,6 +134,12 @@ class Inventory extends React.Component {
       { title: "Quantity", field: "quantity", type: "numeric" },
       { title: "Location", field: "location" },
       { title: "Comment", field: "comment" },
+      {
+        title: "Category",
+        field: "category",
+        lookup: this.categoryLookUp(),
+        emptyValue: "",
+      },
     ];
   };
 
