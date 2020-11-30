@@ -54,9 +54,8 @@ function Row(props) {
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
-          {row.item}
+          {row.category}
         </TableCell>
-        <TableCell align="right">{row.total}</TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -68,21 +67,15 @@ function Row(props) {
               <Table size="small" aria-label="details">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Quantity</TableCell>
-                    <TableCell>Location</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell align="right">Comment</TableCell>
+                    <TableCell>Item</TableCell>
+                    <TableCell>Total</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {row.details.map((detailsRow) => (
-                    <TableRow key={detailsRow.location}>
-                      <TableCell>{detailsRow.quantity}</TableCell>
-                      <TableCell component="th" scope="row">
-                        {detailsRow.location}
-                      </TableCell>
-                      <TableCell>{detailsRow.categoryName}</TableCell>
-                      <TableCell align="right">{detailsRow.comment}</TableCell>
+                    <TableRow key={detailsRow.itemName}>
+                      <TableCell>{detailsRow.itemName}</TableCell>
+                      <TableCell>{detailsRow.total}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -97,29 +90,27 @@ function Row(props) {
 
 Row.propTypes = {
   row: PropTypes.shape({
-    item: PropTypes.string.isRequired,
-    total: PropTypes.number.isRequired,
+    category: PropTypes.string.isRequired,
     details: PropTypes.arrayOf(
       PropTypes.shape({
-        quantity: PropTypes.number.isRequired,
-        location: PropTypes.string.isRequired,
-        comment: PropTypes.string.isRequired,
+        itemName: PropTypes.string.isRequired,
+        total: PropTypes.number.isRequired,
       })
     ).isRequired,
   }).isRequired,
 };
 
-function compareSummedItems(summedItem, otherSummedItem) {
-  if (summedItem.item < otherSummedItem.item) {
+function compareCategory(category, otherCategory) {
+  if (category.category < otherCategory.category) {
     return -1;
   }
-  if (summedItem.item > otherSummedItem.item) {
+  if (category.category > otherCategory.category) {
     return 1;
   }
   return 0;
 }
 
-export default function Summary() {
+export default function SummaryByCategory() {
   const [data, setData] = useState([]);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [error, setError] = useState("");
@@ -131,7 +122,6 @@ export default function Summary() {
     getAllCategories({})
       .then((result) => {
         var categoriesResponse = result.data.categories;
-        console.log("Categories loaded: ", categoriesResponse.length);
         var categoryKeyValue = categoriesResponse.reduce(
           (mapped, { id, category }) => {
             mapped[id] = category;
@@ -139,6 +129,7 @@ export default function Summary() {
           },
           {}
         );
+        console.log("Using categories ", categoryKeyValue);
         console.log(
           "Getting all items for summary from collection ",
           collectionName
@@ -146,43 +137,43 @@ export default function Summary() {
         getAllItems({ collectionName: collectionName }).then((result) => {
           // Read result of the Cloud Function.
           var items = result.data.items;
-          console.log(
-            "calculating total, number of found items: ",
-            items.length
-          );
-          var summedItems = Object.values(
-            items.reduce(
-              (c, { item, quantity, location, comment, category }) => {
-                c[item] = c[item] || { item, total: 0 };
-                c[item].total += quantity;
-                var categoryName = categoryKeyValue[category];
-                if (c[item].item === item) {
-                  if (!c[item].details) {
-                    c[item].details = new Array();
-                    c[item].details.push({
-                      item,
-                      quantity,
-                      location,
-                      categoryName,
-                      comment,
-                    });
-                  } else {
-                    c[item].details.push({
-                      item,
-                      quantity,
-                      location,
-                      categoryName,
-                      comment,
-                    });
-                  }
-                }
-                return c;
-              },
-              {}
-            )
-          );
-          summedItems.sort(compareSummedItems);
-          setData(summedItems);
+          console.log("grouping by category and calculating total of items ");
+          //group by category so we sum within each category after
+          //key -> value(list)
+          var groupByCategory = items.reduce((grouped, item) => {
+            if (item.category) {
+              var categoryValue = categoryKeyValue[item.category];
+              grouped[categoryValue] = [
+                ...(grouped[categoryValue] || []),
+                item,
+              ];
+            } else {
+              //category undefined
+              grouped[""] = [...(grouped[""] || []), item];
+            }
+            return grouped;
+          }, {});
+          let summedByCategories = [];
+          for (let [cat, items] of Object.entries(groupByCategory)) {
+            if (typeof cat == "function") continue;
+            let summedByCategory = {};
+            console.log(cat, items);
+            var summed = items.reduce((summedByItem, currentItem) => {
+              var itemName = currentItem.item;
+              var itemQuantity = currentItem.quantity;
+              summedByItem[itemName] = summedByItem[itemName] || {
+                itemName,
+                total: 0,
+              };
+              summedByItem[itemName].total += itemQuantity;
+              return summedByItem;
+            }, {});
+            summedByCategory.category = cat;
+            summedByCategory.details = Object.values(summed);
+            summedByCategories.push(summedByCategory);
+          }
+          summedByCategories.sort(compareCategory);
+          setData(summedByCategories);
           setDataLoaded(true);
         });
       })
@@ -219,13 +210,13 @@ export default function Summary() {
               <TableHead>
                 <TableRow>
                   <TableCell />
-                  <TableCell>Product</TableCell>
-                  <TableCell align="right">Total</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell />
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.map((row) => (
-                  <Row key={row.item} row={row} />
+                  <Row key={row.itemName} row={row} />
                 ))}
               </TableBody>
             </Table>

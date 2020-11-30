@@ -88,7 +88,7 @@ class Inventory extends React.Component {
       .then((result) => {
         // Read result of the Cloud Function.
         var items = result.data.items;
-        console.log("Loading items ", items);
+        console.log("Loaded items: ", items.length);
         this.setState({
           items: items,
         });
@@ -102,7 +102,7 @@ class Inventory extends React.Component {
               ? 1
               : 0
           );
-          console.log("Loaded categories ", categories);
+          console.log("Loaded categories: ", categories.length);
           this.setState({
             categories: categories,
             dataLoaded: true,
@@ -124,7 +124,6 @@ class Inventory extends React.Component {
       return keyValObject;
     },
     {});
-    console.log("categoriesKeyValues ", categoriesKeyValues);
     return categoriesKeyValues;
   };
 

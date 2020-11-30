@@ -8,6 +8,7 @@ import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import Inventory from "./Inventory.js";
 import Summary from "./Summary.js";
+import SummaryByCategory from "./SummaryByCategory.js";
 import { useRequireAuth } from "./use-require-auth.js";
 import { useRouter } from "./use-router.js";
 import { makeStyles } from "@material-ui/core/styles";
@@ -15,6 +16,7 @@ import { makeStyles } from "@material-ui/core/styles";
 const useStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
+    width: "100%",
   },
   button: {
     marginRight: theme.spacing(2),
@@ -35,9 +37,12 @@ function MainPage(props) {
   if (tab === 0) {
     console.log("Render inventory");
     return <Inventory />;
-  } else {
+  } else if (tab === 1) {
     console.log("Render summary");
     return <Summary />;
+  } else {
+    console.log("Render summary by category");
+    return <SummaryByCategory />;
   }
 }
 
@@ -71,15 +76,17 @@ function MainContainer(props) {
     return (
       <div className={classes.root}>
         <AppBar position="sticky">
-          <Toolbar>
-            <Tabs value={tab} onChange={handleTabClick}>
-              <Tab label="Inventory" className={classes.tab} />
-              <Tab label="Summary" className={classes.tab} />
-            </Tabs>
-            <Button className={classes.button} onClick={() => auth.signout()}>
-              Signout
-            </Button>
-          </Toolbar>
+          <Tabs
+            value={tab}
+            onChange={handleTabClick}
+            variant="scrollable"
+            scrollButtons="on"
+            textColor="white"
+          >
+            <Tab label="Inventory" className={classes.tab} />
+            <Tab label="Summary By Product" className={classes.tab} />
+            <Tab label="Summary By Category" className={classes.tab} />
+          </Tabs>
         </AppBar>
         <MainPage activeTab={tab} />
         <AppBar position="sticky">
@@ -87,6 +94,9 @@ function MainContainer(props) {
             <Typography className={classes.title}>
               Signed in as {auth.user.email}
             </Typography>
+            <Button className={classes.button} onClick={() => auth.signout()}>
+              Signout
+            </Button>
           </Toolbar>
         </AppBar>
       </div>
