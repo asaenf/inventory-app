@@ -14,6 +14,7 @@ firebase.initializeApp({
 
 var db = firebase.firestore();
 
+//generic method to get all documents from given collection
 exports.getAllItems = functions.https.onCall((data, context) => {
   console.log("Getting all documents, collectionName ", data.collectionName);
   const collectionName = getCollectionName(data.collectionName);
@@ -93,20 +94,7 @@ exports.addItem = functions.https.onCall((data, context) => {
                   comment: docData.comment,
                   category: docData.category,
                 };
-              })
-              .catch(function (error) {
-                throw new functions.https.HttpsError(
-                  "internal",
-                  "Error getting added item: " + error
-                ).end;
               });
-          })
-          .catch(function (error) {
-            console.error("Error adding document: ", error);
-            throw new functions.https.HttpsError(
-              "internal",
-              "Error adding item: " + error
-            );
           });
       }
     })
@@ -177,6 +165,7 @@ exports.updateItem = functions.https.onCall((data, context) => {
     });
 });
 
+//generic delete from any collection
 exports.deleteItem = functions.https.onCall((data, context) => {
   console.log("Delete item, collection name: ", data.collectionName);
   const collectionName = getCollectionName(data.collectionName);
@@ -225,6 +214,59 @@ exports.getAllCategories = functions.https.onCall((data, context) => {
       );
     });
 });
+
+//specific add method for to buy collection
+exports.addToBuyItem = functions.https.onCall((data, context) => {
+  console.log("Add item, collection name: ", data.collectionName);
+  const collectionName = getCollectionName(data.collectionName);
+  var itemCollection = db.collection(collectionName);
+
+  const item = data.item;
+
+  var exists = false;
+  return itemCollection
+    .where("item", "==", item)
+    .get()
+    .then(function (querySnapshot) {
+      querySnapshot.forEach(function (doc) {
+        exists = true;
+      });
+      if (exists) {
+        console.log("Matching items already exist ");
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Item already exists"
+        );
+      } else {
+        console.log("Item does not already exist, adding");
+        return itemCollection
+          .add({
+            item: item,
+          })
+          .then(function (docRef) {
+            console.log("Document written with ID: ", docRef.id);
+            var writtenDoc = itemCollection.doc(docRef.id);
+            return writtenDoc
+              .get()
+              .then(function (doc) {
+                var docData = doc.data();
+                console.log("Added document data:", docData);
+                return {
+                  id: doc.id,
+                  item: docData.item,
+                };
+              });
+          });
+      }
+    })
+    .catch(function (error) {
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error adding item: " + error
+      );
+    });
+});
+
 
 function getCollectionName(collectionName) {
   console.log("getCollectionName input:", collectionName);
