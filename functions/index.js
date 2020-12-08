@@ -81,20 +81,18 @@ exports.addItem = functions.https.onCall((data, context) => {
           .then(function (docRef) {
             console.log("Document written with ID: ", docRef.id);
             var writtenDoc = itemCollection.doc(docRef.id);
-            return writtenDoc
-              .get()
-              .then(function (doc) {
-                var docData = doc.data();
-                console.log("Added document data:", docData);
-                return {
-                  id: doc.id,
-                  item: docData.item,
-                  location: docData.location,
-                  quantity: docData.quantity,
-                  comment: docData.comment,
-                  category: docData.category,
-                };
-              });
+            return writtenDoc.get().then(function (doc) {
+              var docData = doc.data();
+              console.log("Added document data:", docData);
+              return {
+                id: doc.id,
+                item: docData.item,
+                location: docData.location,
+                quantity: docData.quantity,
+                comment: docData.comment,
+                category: docData.category,
+              };
+            });
           });
       }
     })
@@ -246,16 +244,14 @@ exports.addToBuyItem = functions.https.onCall((data, context) => {
           .then(function (docRef) {
             console.log("Document written with ID: ", docRef.id);
             var writtenDoc = itemCollection.doc(docRef.id);
-            return writtenDoc
-              .get()
-              .then(function (doc) {
-                var docData = doc.data();
-                console.log("Added document data:", docData);
-                return {
-                  id: doc.id,
-                  item: docData.item,
-                };
-              });
+            return writtenDoc.get().then(function (doc) {
+              var docData = doc.data();
+              console.log("Added document data:", docData);
+              return {
+                id: doc.id,
+                item: docData.item,
+              };
+            });
           });
       }
     })
@@ -266,7 +262,6 @@ exports.addToBuyItem = functions.https.onCall((data, context) => {
       );
     });
 });
-
 
 function getCollectionName(collectionName) {
   console.log("getCollectionName input:", collectionName);
