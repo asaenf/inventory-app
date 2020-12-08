@@ -186,6 +186,7 @@ class Inventory extends React.Component {
                 actionsColumnIndex: -1,
                 filtering: true,
                 sorting: true,
+                addRowPosition: "first",
               }}
               title=""
               editable={{
