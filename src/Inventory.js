@@ -131,7 +131,7 @@ class Inventory extends React.Component {
     return [
       { title: "Product", field: "item", defaultSort: "asc" },
       { title: "Quantity", field: "quantity", type: "numeric" },
-      { title: "Location", field: "location" },
+      { title: "Location", field: "location", type: "numeric" },
       { title: "Comment", field: "comment" },
       {
         title: "Category",
