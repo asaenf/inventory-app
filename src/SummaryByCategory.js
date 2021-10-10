@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { forwardRef } from "react";
 import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import Box from "@material-ui/core/Box";
@@ -22,6 +21,7 @@ import ErrorDialog from "./ErrorDialog.js";
 import firebase from "./FirebaseFunctions.js";
 
 var functions = firebase.functions();
+var performance = firebase.performance();
 
 var getAllItems = functions.httpsCallable("getAllItems");
 var getAllCategories = functions.httpsCallable("getAllCategories");
@@ -119,6 +119,8 @@ export default function SummaryByCategory() {
 
   useEffect(() => {
     console.log("Getting all categories");
+    const t = performance.trace("SummaryByCategory.gettingAllCategories");
+    t.start();
     getAllCategories({})
       .then((result) => {
         var categoriesResponse = result.data.categories;
@@ -135,6 +137,8 @@ export default function SummaryByCategory() {
           collectionName
         );
         getAllItems({ collectionName: collectionName }).then((result) => {
+          const t2 = performance.trace("SummaryByCategory.getAllItems");
+          t2.start();
           // Read result of the Cloud Function.
           var items = result.data.items;
           console.log("grouping by category and calculating total of items ");
@@ -175,6 +179,7 @@ export default function SummaryByCategory() {
           summedByCategories.sort(compareCategory);
           setData(summedByCategories);
           setDataLoaded(true);
+          t2.stop();
         });
       })
       .catch((error) => {
@@ -183,6 +188,7 @@ export default function SummaryByCategory() {
         setErrorCode(error.code);
         shiftErrorDialog(true);
       });
+    t.stop();
   }, []);
 
   let shiftErrorDialog = (isOpen) => {

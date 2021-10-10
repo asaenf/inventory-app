@@ -5,7 +5,6 @@
 //// Sinon is a library used for mocking or verifying function calls in JavaScript.
 //const sinon = require("sinon");
 //
-//const firebase = require("firebase-admin");
 //const test = require("firebase-functions-test")(
 //  {
 //    databaseURL: "https://inventoryapp-unit-test-project.firebaseio.com",
@@ -14,14 +13,23 @@
 //  __dirname + "/service-account-credentials.json"
 //);
 //
-//const admin = require("firebase-admin");
+//const firebase = require("firebase-admin");
 //
-//function insertTestData(item, location, quantity, collection) {
+//function insertTestData(
+//  item,
+//  location,
+//  quantity,
+//  collection,
+//  comment,
+//  category
+//) {
 //  return collection
 //    .add({
 //      item: item,
 //      location: location,
 //      quantity: quantity,
+//      comment: comment,
+//      category: category,
 //    })
 //    .then(function (docRef) {
 //      console.log("Document written with ID: ", docRef.id);
@@ -44,11 +52,10 @@
 //    myFunctions = require("../index.js");
 //    db = firebase.firestore();
 //    collection = db.collection("items");
-//    wrapGetItem = test.wrap(myFunctions.getItem);
 //    wrapGetAllItems = test.wrap(myFunctions.getAllItems);
 //    //insert data
-//    insertTestData("pear", "home", 2, collection);
-//    insertTestData("apple", "home", 1, collection);
+//    //    insertTestData("pear", "home", 2, collection, "", "");
+//    //    insertTestData("apple", "home", 1, collection, "frukt", "");
 //  });
 //
 //  after(() => {
@@ -56,15 +63,17 @@
 //    test.cleanup();
 //  });
 //
-//  describe("getItem", () => {
+//  describe("getAllItems", () => {
 //    let jsonSpy, res, status;
-//    it("should get existing item", (done) => {
-//      const data = { item: "pear", location: "home" };
-//      wrapGetItem(data, {
-//        auth: {
-//          uid: "testUser",
-//        },
-//      }).then((i) => {
+//    it("should get all existing items", (done) => {
+//      wrapGetAllItems(
+//        { collectionName: "items" },
+//        {
+//          auth: {
+//            uid: "testUser",
+//          },
+//        }
+//      ).then((i) => {
 //        console.log("HERE");
 //        assert.equal({ location: "home", quantity: 2, item: "pear" }, i);
 //        done();
