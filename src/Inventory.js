@@ -24,6 +24,7 @@ import ErrorDialog from "./ErrorDialog.js";
 import firebase from "./FirebaseFunctions.js";
 
 var functions = firebase.functions();
+var performance = firebase.performance();
 
 const tableIcons = {
   Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
@@ -83,6 +84,9 @@ class Inventory extends React.Component {
   }
 
   loadItems = function () {
+    const t = performance.trace("loadItems");
+    t.start();
+
     console.log("Getting all items from collection ", collectionName);
     getAllItems({ collectionName: collectionName })
       .then((result) => {
@@ -112,9 +116,12 @@ class Inventory extends React.Component {
       .catch((error) => {
         this.handleError(error);
       });
+    t.stop();
   };
 
   categoryLookUp = function () {
+    const t = performance.trace("categoryLookUp");
+    t.start();
     var categoriesKeyValues = this.state.categories.reduce(function (
       keyValObject,
       currentCategory
@@ -124,6 +131,7 @@ class Inventory extends React.Component {
       return keyValObject;
     },
     {});
+    t.stop();
     return categoriesKeyValues;
   };
 
@@ -167,6 +175,8 @@ class Inventory extends React.Component {
   };
 
   render() {
+    const t = performance.trace("Inventory.render");
+    t.start();
     return (
       <Container component="main">
         {!this.state.dataLoaded && !this.state.errorDialogOpen ? (
@@ -266,6 +276,7 @@ class Inventory extends React.Component {
         )}
       </Container>
     );
+    t.stop();
   }
 }
 
