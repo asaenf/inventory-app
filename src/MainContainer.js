@@ -1,4 +1,4 @@
-import { React, Fragment, Link, useState } from "react";
+import { React, useState } from "react";
 import { Helmet } from "react-helmet";
 import AppBar from "@material-ui/core/AppBar";
 import Button from "@material-ui/core/Button";
@@ -93,7 +93,7 @@ function MainContainer(props) {
             <Tab label="Inventory" className={classes.tab} />
             <Tab label="Summary By Product" className={classes.tab} />
             <Tab label="Summary By Category" className={classes.tab} />
-            {appInstance != "smido" && (
+            {appInstance !== "smido" && (
               <Tab label="To buy" className={classes.tab} />
             )}
           </Tabs>
