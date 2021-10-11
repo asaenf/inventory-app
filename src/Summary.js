@@ -157,7 +157,7 @@ export default function Summary() {
                 var categoryName = categoryKeyValue[category];
                 if (c[item].item === item) {
                   if (!c[item].details) {
-                    c[item].details = new Array();
+                    c[item].details = [];
                     c[item].details.push({
                       item,
                       quantity,
