@@ -86,7 +86,10 @@ function Row(props) {
                   {row.details.map((detailsRow) => (
                     <TableRow key={detailsRow.itemName}>
                       <TableCell>{detailsRow.itemName}</TableCell>
-                      <HtmlTooltip title={detailsRow.locations.join(", ")}>
+                      <HtmlTooltip
+                        placement="top-start"
+                        title={detailsRow.locations.join(", ")}
+                      >
                         <TableCell>{detailsRow.total}</TableCell>
                       </HtmlTooltip>
                     </TableRow>
