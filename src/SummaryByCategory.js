@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, withStyles } from "@material-ui/core/styles";
 import Box from "@material-ui/core/Box";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Container from "@material-ui/core/Container";
@@ -12,6 +12,7 @@ import TableCell from "@material-ui/core/TableCell";
 import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
+import Tooltip from "@material-ui/core/Tooltip";
 import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
@@ -35,6 +36,16 @@ const useRowStyles = makeStyles({
     },
   },
 });
+
+const HtmlTooltip = withStyles((theme) => ({
+  tooltip: {
+    backgroundColor: "#f5f5f9",
+    color: "rgba(0, 0, 0, 0.87)",
+    maxWidth: 220,
+    fontSize: theme.typography.pxToRem(12),
+    border: "1px solid #dadde9",
+  },
+}))(Tooltip);
 
 function Row(props) {
   const { row } = props;
@@ -75,7 +86,9 @@ function Row(props) {
                   {row.details.map((detailsRow) => (
                     <TableRow key={detailsRow.itemName}>
                       <TableCell>{detailsRow.itemName}</TableCell>
-                      <TableCell>{detailsRow.total}</TableCell>
+                      <HtmlTooltip title={detailsRow.locations.join(", ")}>
+                        <TableCell>{detailsRow.total}</TableCell>
+                      </HtmlTooltip>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -165,11 +178,14 @@ export default function SummaryByCategory() {
             var summed = items.reduce((summedByItem, currentItem) => {
               var itemName = currentItem.item;
               var itemQuantity = currentItem.quantity;
+              var location = currentItem.location;
               summedByItem[itemName] = summedByItem[itemName] || {
                 itemName,
                 total: 0,
+                locations: [],
               };
               summedByItem[itemName].total += itemQuantity;
+              summedByItem[itemName].locations.push(location);
               return summedByItem;
             }, {});
             summedByCategory.category = cat;
@@ -178,6 +194,7 @@ export default function SummaryByCategory() {
           }
           summedByCategories.sort(compareCategory);
           setData(summedByCategories);
+          console.log(summedByCategories);
           setDataLoaded(true);
           t2.stop();
         });

@@ -175,8 +175,6 @@ class Inventory extends React.Component {
   };
 
   render() {
-    const t = performance.trace("Inventory.render");
-    t.start();
     return (
       <Container component="main">
         {!this.state.dataLoaded && !this.state.errorDialogOpen ? (
@@ -276,7 +274,6 @@ class Inventory extends React.Component {
         )}
       </Container>
     );
-    t.stop();
   }
 }
 
